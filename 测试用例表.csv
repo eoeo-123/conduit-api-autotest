@@ -1,0 +1,16 @@
+﻿用例编号,模块,接口,用例类型,前置条件,请求说明,预期结果,实际结果,是否通过,备注
+TC01,用户模块,POST /api/users（注册）,正常场景,无,合法用户名/邮箱/密码注册,200 返回 user 和 token,200 返回 token,通过,首次注册成功
+TC02,用户模块,POST /api/users（注册）,业务异常,TC01 已注册该邮箱,同一邮箱再次注册,400 拒绝并提示,400 EmailAlreadyTakenException 提示邮箱已存在,通过,错误信息精确到 email 字段
+TC03,鉴权模块,GET /api/user,异常场景,无,携带伪造鉴权头（值只有 Token 字样）,401 或 403 拒绝,403 Invalid token schema,通过,鉴权头格式校验生效
+TC04,鉴权模块,GET /api/user,异常场景,无,携带截断的 token（仅一段）,401 或 403 拒绝,403 IncorrectJWTTokenException,通过,JWT 标准应为三段式
+TC05,鉴权模块,GET /api/user,异常场景,无,不携带 Authorization 头,401 或 403 拒绝,403 已拒绝访问,通过,未携带鉴权头被正确拦截
+TC06,鉴权模块,GET /api/user,正常场景,持有有效 token,携带有效 token 请求,200 返回当前用户信息,200 返回 zhangsan 资料,通过,登录态校验通过
+TC07,文章模块,POST /api/articles（发文章）,正常场景,持有有效 token,合法数据创建文章,200 返回文章对象,200 返回文章对象（含 slug 和 tagList）,通过,发现校验规则：description 和 body 最少 10 字符
+TC08a,文章模块,GET /api/articles（列表）,正常场景,无,limit=5&offset=0 查询列表,200 返回文章数组,200 返回文章数组且包含新建文章,通过,数据一致性验证通过
+TC08b,文章模块,GET /api/articles（列表）,边界值,无,limit=0,422 拒绝（文档规定最小值 1）,422,通过,符合接口文档规则
+TC08c,文章模块,GET /api/articles（列表）,边界值,无,limit=-1,422 拒绝,422,通过,负数被参数校验拦截
+TC08d,文章模块,GET /api/articles（列表）,边界值,无,limit=99999,200 或合理容错,200 返回全部文章,通过,遗留风险：limit 无上限校验，大数据量下存在性能风险
+TC08e,文章模块,GET /api/articles（列表）,异常场景,无,limit=abc,422 类型错误,422,通过,参数类型校验生效
+TC09,文章模块,POST /api/articles（发文章）,边界值,持有有效 token,description 恰好 10 个字符,200,200 接受,通过,长度下界通过，校验按字符数计算
+TC10,文章模块,POST /api/articles（发文章）,边界值,持有有效 token,description 9 个字符,422 提示最少 10 字符,422 提示至少 10 字符,通过,长度下界拒绝生效
+TC11,文章模块,POST /api/articles（发文章）,鉴权异常,无,不带 token 发文章,401 或 403 拒绝,403 已拒绝,通过,未登录无法创建文章，越权操作被拦截
